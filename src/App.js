@@ -12,7 +12,10 @@ import {
 import Layout from './components/layouts/dark';
 
 import './App.css';
-
+const gameFactory = require('./src/game/factory').gameFactory;
+const game = gameFactory();
+// start game by scheduling ticks
+let interval = setInterval(game.tick.bind(game), 1000);
 
 class App extends Component {
   constructor(props, context) {
