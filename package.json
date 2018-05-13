@@ -1,0 +1,28 @@
+{
+  "name": "idlesystems",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jeremygiberson/idlesystems.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jeremygiberson/idlesystems/issues"
+  },
+  "homepage": "https://github.com/jeremygiberson/idlesystems#readme",
+  "dependencies": {
+    "columnify": "^1.5.4",
+    "faker": "^4.1.0",
+    "immutable": "^3.8.2",
+    "merchant.js": "^0.5.1"
+  },
+  "devDependencies": {
+    "vorpal": "^1.12.0"
+  }
+}
