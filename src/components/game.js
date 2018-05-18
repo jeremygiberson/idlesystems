@@ -1,79 +1,43 @@
 import React, { Component } from 'react';
 import { Route, Link } from "react-router-dom";
-import classnames from 'classnames';
-import { TabContent, TabPane,
+import {
   Nav, NavItem, NavLink,
   Button,
   Card, CardHeader, CardBody, CardTitle, CardSubtitle, CardText, CardFooter, CardImg,
   Container, Row, Col,
   ListGroup, ListGroupItem
 } from 'reactstrap';
-import Directed from './graphs/directed';
+
+import FontAwesome from 'react-fontawesome';
+import PropTypes from 'prop-types';
+
 
 export default class Game extends Component {
   constructor(props) {
     super(props);
-
-    this.toggle = this.toggle.bind(this);
-
     this.state = {
-      activeTab: '/game'
+
     };
   }
-
-  toggle(tab) {
-    if (this.state.activeTab !== tab) {
-      this.props.history.push(tab);
-      this.setState({
-        activeTab: tab
-      });
-    }
-  }
-
   render() {
+    let game = this.props.game;
+    console.log('game', game);
     let match = this.props.match;
     return (
       <div>
         <Card outline color="secondary">
           <CardHeader>
-            <Nav tabs className="card-header-tabs bg-dark">
-              <NavItem>
-                <NavLink
-                  className={classnames({ active: this.state.activeTab === '/game' })}
-                  onClick={() => { this.toggle('/game'); }}
-                >
-                  System
-                </NavLink>
-              </NavItem>
-              <NavItem>
-                <NavLink
-                  className={classnames({ active: this.state.activeTab === '/game/inventory' })}
-                  onClick={() => { this.toggle('/game/inventory'); }}
-                >
-                  Inventory
-                </NavLink>
-              </NavItem>
-              <NavItem>
-                <NavLink
-                  className={classnames({ active: this.state.activeTab === '/game/store' })}
-                  onClick={() => { this.toggle('/game/store'); }}
-                >
-                  Store
-                </NavLink>
-              </NavItem>
-            </Nav>
+            <CardText>
+              <span>Make more &nbsp;</span>
+              <FontAwesome name='money-check-alt' className="text-success"/> <span className="text-success">{game.getPrimaryCurrencyName()}</span>!
+            </CardText>
           </CardHeader>
+          <CardBody className="text-center text-success">
+            <h1>{game.getPrimaryCurrencyValue()}</h1>
+            <p className=""><FontAwesome name='money-check-alt'/> {game.getPrimaryCurrencyName()}</p>
+          </CardBody>
           <CardBody className={"border-secondary"}>
-            <TabContent activeTab={this.state.activeTab}>
-              <TabPane>
-                <Route path={`${match.url}/:topicId`} component={Topic} />
-                <Route
-                  exact
-                  path={match.url}
-                  render={() => <h3>Please select a topic.</h3>}
-                />
-              </TabPane>
-            </TabContent>
+            asdf
           </CardBody>
           <CardFooter>
             foot
@@ -95,15 +59,8 @@ export default class Game extends Component {
   }
 }
 
-
-
-const Topic = ({ match }) => (
-  <div>
-    <h3>{match.params.topicId}</h3>
-  </div>
-);
-
-
-
+Game.propTypes = {
+  game: PropTypes.object.isRequired,
+};
 
 

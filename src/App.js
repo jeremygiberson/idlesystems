@@ -2,40 +2,65 @@ import React, { Component } from 'react';
 import { BrowserRouter as Router, Route, Link } from "react-router-dom";
 import GameMenu from './components/gameMenu';
 import Game from './components/game';
-import {
-  Navbar,
-  NavbarBrand,
-  Nav,
-  NavItem,
-  NavLink,
-} from 'reactstrap';
 import Layout from './components/layouts/dark';
+import { gameFactory } from './game/factory';
 
 import './App.css';
-const gameFactory = require('./src/game/factory').gameFactory;
-const game = gameFactory();
+
 // start game by scheduling ticks
-let interval = setInterval(game.tick.bind(game), 1000);
+
 
 class App extends Component {
   constructor(props, context) {
     super(props, context);
 
     // load state
-    this.state = Object.assign({}, localStorage.getItem('game'));
+    this.state = {game: this._load()};
+
+    this.interval = setInterval(this._tick.bind(this), 1000);
+  }
+
+  _load() {
+    let saveGame = localStorage.getItem('game');
+    // TODO
+    //saveGame = saveGame ? JSON.parse(saveGame) : gameFactory();
+    saveGame = gameFactory();
+    console.log('loaded',saveGame);
+    return saveGame;
+  }
+
+  _save() {
+    let saveGame = JSON.stringify(this.game);
+    localStorage.setItem('game', saveGame);
+    console.log('saved', saveGame);
+  }
+
+  _tick() {
+    if(this.state.game && this.state.game.tick){
+      this.state.game.tick.bind(this.state.game);
+      this._save();
+    }
+  }
+
+  quit(){
 
   }
-  render() {
-    // save state
-    localStorage.setItem('game', this.state);
 
+  newGame() {
+    this.game = gameFactory();
+    this._save();
+  }
+
+  render() {
     return (
       <Layout>
         <Router>
           <div>
             <Route exact path="/" component={GameMenu} />
             <Route path="/about" component={About} />
-            <Route path="/game" component={Game} />
+            <Route path="/game" render={() => {
+              return <Game game={this.state.game}/>
+            }} />
           </div>
         </Router>
       </Layout>

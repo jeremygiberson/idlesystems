@@ -2,6 +2,46 @@ let faker = require('faker');
 let { Map, Set } = require('immutable');
 let { addItem, inTheBlack, currencies, add, pouchEffectsLedger, buy } = require('merchant.js');
 
+let ItemFactory = (name, currency, baseCost, costRate, exchangeCurrency, productionBase) => {
+  return {
+    type: name,
+    cost: (state) => {
+      let owned = state.wallet.get(name);
+      return Map({ [currency]: - (baseCost * Math.pow(costRate, owned)) });
+    },
+    effect: (state) => {
+      let owned = state.wallet.get(name);
+      return Map({ [exchangeCurrency]: productionBase * owned });
+    }
+  };
+};
+
+let ClickGeneratorFactory = (name, currency, productionBase) => {
+  return {
+    type: name,
+    cost: (state) => {
+      let level = state[name + '_level'] || 1;
+      return Map({ [currency]: Math.floor(productionBase * level) });
+    }
+  };
+};
+
+let AutoGeneratorFactory = (name, currency, baseCost, costRate, exchangeCurrency, productionBase) => {
+  return {
+    type: name,
+    cost: (state) => {
+      let owned = state.wallet.get(name);
+      return Map({ [currency]: - Math.ceil(baseCost * Math.pow(costRate, owned)) });
+    },
+    effect: (state) => {
+      let owned = state.wallet.get(name);
+      return Map({ [exchangeCurrency]: Math.floor(productionBase * owned) });
+    }
+  };
+};
+
+
+
 let HarvesterFactory = (resourceName, quantity) => ({
   type: `${resourceName}-harvester`,
   effect: (state) => Map({ [resourceName]: quantity })
@@ -36,12 +76,27 @@ let shuffle = (array) => {
 
 class Game {
   constructor() {
+    this.primaryCurrency = 'GOLD';
+    this.pouch = {};
     this.state = {
-      items: {},
-      converters: {},
       wallet: Map({}),
       effects: Map({})
     }
+  }
+
+  setPrimaryCurrency(currency) {
+    this.primaryCurrency = currency;
+    this.state.wallet = add(this.state.wallet, Map({[currency]: 0}));
+  }
+  getPrimaryCurrencyName() {
+    return this.primaryCurrency;
+  }
+  getPrimaryCurrencyValue(){
+    return this.state.wallet.get(this.primaryCurrency);
+  }
+
+  addItem(item){
+    this.pouch[item.type] = item;
   }
 
   tick() {
@@ -65,59 +120,56 @@ class Game {
       return;
     }
 
-    if(typeof this.state.items[item.type] === 'undefined') {
-      this.state.items[item.type] = item;
-    }
-
     let wallet = addItem(item, walletWithCostsApplied);
-    let effects = pouchEffectsLedger(Object.values(this.state.items), wallet);
+    let effects = pouchEffectsLedger(Object.values(this.state.pouch), wallet);
 
     Object.assign(this.state, {
       wallet,
       effects
     });
   }
-
-  convert(conversion) {
-    let walletWithCostsApplied = buy(conversion, this.state.wallet);
-    if (!inTheBlack(walletWithCostsApplied)) {
-      return;
-    }
-
-    Object.assign(this.state, {
-      wallet
-    });
-  }
-
-  save() {}
-  static load(saveGame) {}
 }
 
 module.exports = {
   gameFactory: () => {
     let game = new Game();
+    let currencyNames = Set(faker.lorem.words(25).split(' ')).toArray();
+    let currencies = [];
+    let primaryCurrency = currencyNames.pop();
 
-    let numResources = faker.random.number({min: 1, max: 3});
-    let resourceNames = Set(faker.lorem.words(25).split(' ')).toArray();
-    let resources = [];
+    game.setPrimaryCurrency(primaryCurrency);
 
-    for(let i = 0; i < numResources; i++){
-      let resource = resourceNames.shift();
-      resources.push(resource);
+    let clickExchange = ClickGeneratorFactory(currencyNames.pop(), primaryCurrency, faker.random.number({min:1, max:5})/2);
+
+    game.addItem(clickExchange);
+
+    let autoExchange = AutoGeneratorFactory(currencyNames.pop(), primaryCurrency,
+      3 + (faker.random.number({min: 1, max: 99})/100),
+      1 + (faker.random.number({min: 1, max: 99})/100),
+      primaryCurrency,
+      5 + (faker.random.number({min: 1, max: 99})/100),
+      );
+  /*
+    let numCurrencies = faker.random.number({min: 1, max: 3});
+
+    for(let i = 0; i < numCurrencies; i++){
+      let currency = currencyNames.shift();
+      currencies.push(currency);
       let qty = faker.random.number({min: 1, max: 10});
-      let harvester = HarvesterFactory(resource, qty);
-      game.buy(harvester);
+      let harvester = HarvesterFactory(currency, qty);
+      // game.buy(harvester);
     }
 
     let complexity = 2;
     for(let i = 0; i < complexity; i++) {
-      let randomResourceOrder = shuffle(resources);
-      let componentCount = fake.random.number({min: 1, max: 2});
-      let compoundResource = resourceNames.shift();
+      let randomResourceOrder = shuffle(currencies);
+      let componentCount = faker.random.number({min: 1, max: 2});
+      let compoundResource = currencyNames.shift();
 
       let compound = CompoundResourceFactory(compoundResource, randomResourceOrder.slice(0, componentCount));
-      game.state.converters[compound.type]= compound;
+      // game.state.converters[compound.type]= compound;
     }
+    */
 
     return game;
   }
